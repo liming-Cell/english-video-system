@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英语课前自动视频播放系统 · 教师端</title>
+<!-- 版本号用于强制刷新静态资源：升级服务端后把 v 递增即可，避免教师浏览器继续用旧脚本 -->
+<link rel="stylesheet" href="/style.css?v=1.0.1">
+</head>
+<body>
+
+<!-- ====================== 登录页 ====================== -->
+<div id="login">
+  <div class="box">
+    <h1>英语课前自动视频播放系统</h1>
+    <p class="sub">教师端 · 排课 / 视频管理 / 设备监控</p>
+    <label class="field">
+      <span>用户名</span>
+      <input class="input" id="login-user" placeholder="请输入账号" autocomplete="username">
+    </label>
+    <label class="field">
+      <span>密码</span>
+      <input class="input" id="login-pass" type="password" placeholder="请输入密码" autocomplete="current-password">
+    </label>
+    <button class="btn" id="login-btn" style="width:100%">登 录</button>
+    <div class="err" id="login-err"></div>
+    <p class="hint" style="text-align:center">默认管理员账号 admin / admin123</p>
+  </div>
+</div>
+
+<!-- ====================== 主界面 ====================== -->
+<div id="app">
+  <header class="topbar">
+    <div class="logo">英语课前视频 · 教师端</div>
+    <nav class="tabs" id="tabs">
+      <button data-view="week" class="active">周历排课</button>
+      <button data-view="videos">视频库</button>
+      <button data-view="homework">作业布置</button>
+      <button data-view="monitor">设备监控</button>
+      <button data-view="admin" id="tab-admin" style="display:none">账号与班级</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="row">
+      <select class="select" id="class-picker" style="width:170px"></select>
+      <div class="who"><b id="who-name">-</b><span id="who-class">-</span></div>
+      <button class="btn ghost small" id="logout-btn">退出</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ---------------- 周历排课 ---------------- -->
+    <section class="view active" id="view-week">
+      <div class="calbar">
+        <button class="btn small" id="week-prev">◀ 上一周</button>
+        <b id="week-label">本周</b>
+        <button class="btn small" id="week-next">下一周 ▶</button>
+        <button class="btn ghost small" id="week-today">回到本周</button>
+        <div class="grow"></div>
+        <span class="hint" id="week-count"></span>
+        <button class="btn ghost small" id="btn-batch">批量导入</button>
+        <button class="btn ghost small" id="btn-tpl">下载模板</button>
+        <button class="btn danger small" id="btn-clear">清空计划</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="calendar" id="calendar"></table>
+      </div>
+      <p class="hint">提示：点击空白格可新增播放计划；点击已有计划可编辑或删除。时间为该节课自动开始播放的时刻。</p>
+    </section>
+
+    <!-- ---------------- 视频库 ---------------- -->
+    <section class="view" id="view-videos">
+      <div class="calbar">
+        <button class="btn" id="btn-upload">＋ 上传本地视频</button>
+        <button class="btn ghost" id="btn-link">＋ 添加在线链接</button>
+        <div class="grow"></div>
+        <span class="hint" id="video-count"></span>
+        <button class="btn ghost small" id="btn-video-refresh">刷新</button>
+      </div>
+      <div id="upload-progress" class="card" style="display:none">
+        <div class="row"><span id="up-name" class="grow">上传中...</span><span id="up-pct">0%</span></div>
+        <div class="bar-progress"><i id="up-bar"></i></div>
+      </div>
+      <div class="videos" id="video-list"></div>
+    </section>
+
+    <!-- ---------------- 作业布置 ---------------- -->
+    <section class="view" id="view-homework">
+      <div class="card">
+        <h3>布置新作业</h3>
+        <p class="hint">发布后，该班级所有在线或下次联网的学生端会立即顶部弹窗提醒（多条作业合并为一个窗口）。最长 500 字。</p>
+        <textarea class="textarea" id="hw-content" rows="4" placeholder="例如：1. 朗读 Unit 3 课文三遍；2. 完成练习册 P21-22；3. 预习 Unit 4 生词。"></textarea>
+        <div class="row" style="margin-top:10px">
+          <div class="grow"></div>
+          <button class="btn" id="btn-hw-publish">立即发布</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <h3 style="margin:0" class="grow">历史作业（最近 200 条）</h3>
+          <button class="btn ghost small" id="btn-hw-refresh">刷新</button>
+        </div>
+        <table class="grid" id="hw-table"></table>
+      </div>
+    </section>
+
+    <!-- ---------------- 设备监控 ---------------- -->
+    <section class="view" id="view-monitor">
+      <div class="stats" id="mon-stats"></div>
+      <div class="calbar">
+        <label class="row" style="gap:6px">
+          <span class="muted">日期</span>
+          <input class="input" type="date" id="mon-date" style="width:160px">
+        </label>
+        <button class="btn ghost small" id="btn-mon-refresh">刷新</button>
+        <button class="btn small" id="btn-bindcode">生成设备绑定码</button>
+        <div class="grow"></div>
+        <span class="hint" id="mon-live">实时推送：连接中…</span>
+      </div>
+
+      <div class="card">
+        <h3>教室设备与今日播放情况</h3>
+        <table class="grid" id="mon-devices"></table>
+      </div>
+
+      <div class="card">
+        <h3>今日播放日志</h3>
+        <table class="grid" id="mon-logs"></table>
+      </div>
+    </section>
+
+    <!-- ---------------- 账号与班级 ---------------- -->
+    <section class="view" id="view-admin">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <h3 style="margin:0" class="grow">教师账号</h3>
+          <button class="btn small" id="btn-add-user">＋ 新建账号</button>
+        </div>
+        <table class="grid" id="user-table"></table>
+      </div>
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <h3 style="margin:0" class="grow">班级</h3>
+          <button class="btn small" id="btn-add-class">＋ 新建班级</button>
+        </div>
+        <table class="grid" id="class-table"></table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toasts"></div>
+<div id="modals"></div>
+
+<script src="/app.js?v=1.0.1"></script>
+</body>
+</html>
